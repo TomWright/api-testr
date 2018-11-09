@@ -2,7 +2,6 @@ package check
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -11,7 +10,7 @@ type BodyEqualChecker struct {
 }
 
 func (c *BodyEqualChecker) Check(response *http.Response) error {
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := readResponseBody(response)
 	if err != nil {
 		return fmt.Errorf("could not read response body: %s", err)
 	}

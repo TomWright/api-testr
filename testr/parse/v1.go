@@ -11,6 +11,8 @@ import (
 
 type v1 struct {
 	Name    string    `json:"name"`
+	Group   string    `json:"group"`
+	Order   int       `json:"order"`
 	Request v1Request `json:"request"`
 	Checks  []v1Check `json:"checks"`
 }
@@ -43,8 +45,20 @@ func V1(data []byte, baseAddr string) (*testr.Test, error) {
 
 	t := &testr.Test{
 		Name:    v.Name,
+		Group:   v.Group,
+		Order:   v.Order,
 		Request: req,
 		Checks:  make([]check.Checker, len(v.Checks)),
+	}
+
+	if t.Name == "" {
+		t.Name = "unknown"
+	}
+	if t.Group == "" {
+		t.Group = "default"
+	}
+	if t.Order < 0 {
+		t.Order = 0
 	}
 
 	for cIndex, c := range v.Checks {
@@ -67,7 +81,7 @@ func V1Check(c v1Check) (check.Checker, error) {
 			return nil, fmt.Errorf("missing required data `value`")
 		}
 		return &check.BodyEqualChecker{Value: value}, nil
-	case "bodyJsonEqual":
+	case "jsonBodyEqual":
 		value, ok := c.Data.Get("value")
 		if !ok {
 			return nil, fmt.Errorf("missing required data `value`")

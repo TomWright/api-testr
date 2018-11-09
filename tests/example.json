@@ -1,6 +1,8 @@
 {
   "version": 1,
   "name": "example",
+  "group": "default",
+  "order": 0,
   "request": {
     "type": "GET",
     "path": "/todos/1",
@@ -14,7 +16,7 @@
       }
     },
     {
-      "type": "bodyJsonEqual",
+      "type": "jsonBodyEqual",
       "data": {
         "value": {
           "userId": 1,

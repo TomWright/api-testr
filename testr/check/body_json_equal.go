@@ -3,7 +3,6 @@ package check
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"reflect"
 )
@@ -13,7 +12,7 @@ type BodyJSONChecker struct {
 }
 
 func (c *BodyJSONChecker) Check(response *http.Response) error {
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := readResponseBody(response)
 	if err != nil {
 		return fmt.Errorf("could not read response body: %s", err)
 	}
