@@ -51,6 +51,29 @@ Checks that the body returned matches the given JSON object.
 }
 ```
 
+#### JSON Body Query Exists
+Queries the JSON body using [gjson](https://github.com/tidwall/gjson) and ensures that the queried element exists.
+```
+{
+  "type": "jsonBodyQueryExists",
+  "data": {
+    "query": "title"
+  }
+}
+```
+
+#### JSON Body Query Equal
+Queries the JSON body using [gjson](https://github.com/tidwall/gjson) and ensures that the queried element has a value equal to the one specified.
+```
+{
+  "type": "jsonBodyQueryEqual",
+  "data": {
+    "query": "title",
+    "value": "delectus aut autem"
+  }
+}
+```
+
 #### Status Code Equal
 Checks that the status code returned matches the given value.
 ```

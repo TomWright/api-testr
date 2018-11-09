@@ -81,13 +81,34 @@ func V1Check(c v1Check) (check.Checker, error) {
 			return nil, fmt.Errorf("missing required data `value`")
 		}
 		return &check.BodyEqualChecker{Value: value}, nil
+
 	case "jsonBodyEqual":
 		value, ok := c.Data.Get("value")
 		if !ok {
 			return nil, fmt.Errorf("missing required data `value`")
 		}
 		return &check.BodyJSONChecker{Value: value}, nil
-	case "statusCode":
+
+	case "jsonBodyQueryExists":
+		query, ok := c.Data.String("query")
+		if !ok {
+			return nil, fmt.Errorf("missing required data `query`")
+		}
+		return &check.BodyJSONQueryExistsChecker{Query: query}, nil
+
+	case "jsonBodyQueryEqual":
+		query, ok := c.Data.String("query")
+		if !ok {
+			return nil, fmt.Errorf("missing required data `query`")
+		}
+		value, ok := c.Data.Get("value")
+		if !ok {
+			return nil, fmt.Errorf("missing required data `value`")
+		}
+		valueType, _ := c.Data.String("valueType")
+		return &check.BodyJSONQueryEqualChecker{Query: query, Value: value, NullValue: value == nil, ValueType: valueType}, nil
+
+	case "statusCodeEqual":
 		value, ok := c.Data.Int("value")
 		if !ok {
 			return nil, fmt.Errorf("missing required data `value`")
