@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "name": "example",
+  "request": {
+    "type": "GET",
+    "path": "/todos/1",
+    "body": ""
+  },
+  "checks": [
+    {
+      "type": "statusCode",
+      "data": {
+        "value": 200
+      }
+    },
+    {
+      "type": "bodyJsonEqual",
+      "data": {
+        "value": {
+          "userId": 1,
+          "id": 1,
+          "title": "delectus aut autem",
+          "completed": false
+        }
+      }
+    }
+  ]
+}
+
+
