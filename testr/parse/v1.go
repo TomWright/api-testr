@@ -7,6 +7,7 @@ import (
 	"github.com/tomwright/api-testr/testr"
 	"github.com/tomwright/api-testr/testr/check"
 	"net/http"
+	"regexp"
 )
 
 type v1 struct {
@@ -106,6 +107,21 @@ func V1Check(c v1Check) (check.Checker, error) {
 			return nil, fmt.Errorf("missing required data `value`")
 		}
 		return &check.BodyJSONQueryEqualChecker{Query: query, Value: value, NullValue: value == nil}, nil
+
+	case "jsonBodyQueryRegexMatch":
+		query, ok := c.Data.String("query")
+		if !ok {
+			return nil, fmt.Errorf("missing required data `query`")
+		}
+		pattern, ok := c.Data.String("pattern")
+		if !ok {
+			return nil, fmt.Errorf("missing required data `pattern`")
+		}
+		r, err := regexp.Compile(pattern)
+		if err != nil {
+			return nil, fmt.Errorf("could not compile regex pattern `%s`: %s", pattern, err)
+		}
+		return &check.BodyJSONQueryRegexMatchChecker{Query: query, Regexp: r}, nil
 
 	case "statusCodeEqual":
 		value, ok := c.Data.Int("value")

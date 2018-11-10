@@ -74,6 +74,18 @@ Queries the JSON body using [gjson](https://github.com/tidwall/gjson) and ensure
 }
 ```
 
+#### JSON Body Query Equal
+Queries the JSON body using [gjson](https://github.com/tidwall/gjson) and ensures that the queried element matches the given regex pattern.
+```
+{
+  "type": "jsonBodyQueryRegexMatch",
+  "data": {
+    "query": "title",
+    "pattern": "[a-z]{8} [a-z]{3} [a-z]{5}"
+  }
+}
+```
+
 #### Status Code Equal
 Checks that the status code returned matches the given value.
 ```
