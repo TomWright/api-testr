@@ -9,7 +9,6 @@ import (
 
 type BodyJSONQueryEqualChecker struct {
 	Query     string
-	ValueType string
 	Value     interface{}
 	NullValue bool
 }

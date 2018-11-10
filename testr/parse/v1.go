@@ -105,8 +105,7 @@ func V1Check(c v1Check) (check.Checker, error) {
 		if !ok {
 			return nil, fmt.Errorf("missing required data `value`")
 		}
-		valueType, _ := c.Data.String("valueType")
-		return &check.BodyJSONQueryEqualChecker{Query: query, Value: value, NullValue: value == nil, ValueType: valueType}, nil
+		return &check.BodyJSONQueryEqualChecker{Query: query, Value: value, NullValue: value == nil}, nil
 
 	case "statusCodeEqual":
 		value, ok := c.Data.Int("value")
