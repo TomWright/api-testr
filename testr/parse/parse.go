@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/tomwright/api-testr/testr"
@@ -11,15 +12,15 @@ type version struct {
 	Version int `json:"version"`
 }
 
-func File(path string, baseAddr string) (*testr.Test, error) {
+func File(ctx context.Context, path string) (*testr.Test, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("could not read test file: %s", err)
 	}
-	return Parse(data, baseAddr)
+	return Parse(ctx, data)
 }
 
-func Parse(data []byte, baseAddr string) (*testr.Test, error) {
+func Parse(ctx context.Context, data []byte) (*testr.Test, error) {
 	v := version{}
 	if err := json.Unmarshal(data, &v); err != nil {
 		return nil, fmt.Errorf("could not unmarshal version data: %s", err)
@@ -30,7 +31,7 @@ func Parse(data []byte, baseAddr string) (*testr.Test, error) {
 
 	switch v.Version {
 	case 1:
-		t, err = V1(data, baseAddr)
+		t, err = V1(ctx, data)
 	case 0:
 		fallthrough
 	default:

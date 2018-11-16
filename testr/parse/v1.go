@@ -2,6 +2,7 @@ package parse
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/tomwright/api-testr/testr"
@@ -29,16 +30,14 @@ type v1Check struct {
 	Data *Data  `json:"data"`
 }
 
-func V1(data []byte, baseAddr string) (*testr.Test, error) {
+func V1(ctx context.Context, data []byte) (*testr.Test, error) {
 	v := v1{}
 	if err := json.Unmarshal(data, &v); err != nil {
 		return nil, fmt.Errorf("could not unmarshal v1 test data: %s", err)
 	}
 
-	// var bytesBuffer *bytes.Buffer = nil
-	// if len(v.Request.Body) > 0 {
-	// 	bytesBuffer = bytes.NewBuffer([]byte(v.Request.Body))
-	// }
+	baseAddr := testr.BaseURLFromContext(ctx)
+
 	req, err := http.NewRequest(v.Request.Method, baseAddr+v.Request.Path, bytes.NewBuffer([]byte(v.Request.Body)))
 	if err != nil {
 		return nil, fmt.Errorf("could not create request: %s", err)
@@ -63,7 +62,7 @@ func V1(data []byte, baseAddr string) (*testr.Test, error) {
 	}
 
 	for cIndex, c := range v.Checks {
-		checker, err := V1Check(c)
+		checker, err := V1Check(ctx, c)
 		if err != nil {
 			return nil, fmt.Errorf("could not parse v1 check [%d]: %s", cIndex, err)
 		}
@@ -74,7 +73,7 @@ func V1(data []byte, baseAddr string) (*testr.Test, error) {
 	return t, nil
 }
 
-func V1Check(c v1Check) (check.Checker, error) {
+func V1Check(ctx context.Context, c v1Check) (check.Checker, error) {
 	switch c.Type {
 	case "bodyEqual":
 		value, ok := c.Data.String("value")
@@ -129,6 +128,17 @@ func V1Check(c v1Check) (check.Checker, error) {
 			return nil, fmt.Errorf("missing required data `value`")
 		}
 		return &check.StatusCodeEqualChecker{Value: value}, nil
+
+	case "bodyCustom":
+		value, ok := c.Data.String("id")
+		if !ok {
+			return nil, fmt.Errorf("missing required data `id`")
+		}
+		checkFunc := testr.CustomBodyCheckFromContext(ctx, value)
+		if checkFunc == nil {
+			return nil, fmt.Errorf("no custom body check found with id of `%s`", value)
+		}
+		return &check.BodyCustomChecker{CheckBody: checkFunc}, nil
 
 	default:
 		return nil, fmt.Errorf("unhandled type `%s`", c.Type)

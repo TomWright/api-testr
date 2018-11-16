@@ -38,7 +38,13 @@ type RunAllArgs struct {
 	MaxConcurrentTests int
 }
 
-func RunAll(args RunAllArgs, tests ...*Test) error {
+type RunAllResult struct {
+	Executed int
+	Passed   int
+	Failed   int
+}
+
+func RunAll(args RunAllArgs, tests ...*Test) RunAllResult {
 	if args.HTTPClient == nil {
 		args.HTTPClient = http.DefaultClient
 	}
@@ -49,6 +55,9 @@ func RunAll(args RunAllArgs, tests ...*Test) error {
 	sem := make(chan struct{}, args.MaxConcurrentTests)
 
 	groupedTests := groupTests(tests...)
+
+	resMu := sync.Mutex{}
+	res := &RunAllResult{}
 
 groupLoop:
 	for groupName, groupTests := range groupedTests {
@@ -79,8 +88,16 @@ groupLoop:
 					sem <- struct{}{}
 
 					err := Run(t, args.HTTPClient)
+
+					resMu.Lock()
+					defer resMu.Unlock()
+
+					res.Executed++
 					if err != nil {
+						res.Failed++
 						log.Printf("test `%s` failed: %s\n", t.Name, err)
+					} else {
+						res.Passed++
 					}
 				}(t)
 			}
@@ -89,7 +106,10 @@ groupLoop:
 		}
 	}
 
-	return nil
+	resMu.Lock()
+	defer resMu.Unlock()
+
+	return *res
 }
 
 func newTestsGroup() *testsGroup {
