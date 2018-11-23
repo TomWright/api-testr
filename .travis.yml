@@ -3,7 +3,7 @@ language: go
 go:
   - "1.10.x"
 
-go_import_path: github.com/tomwright/api-testr
+go_import_path: github.com/tomwright/api-testr/testr
 
 script: go test -race ./ -coverprofile=coverage.txt -covermode=atomic
 
