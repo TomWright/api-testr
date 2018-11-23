@@ -21,11 +21,11 @@ type v1 struct {
 }
 
 type v1Request struct {
-	Method   string            `json:"method"`
-	Path     string            `json:"path"`
-	Body     interface{}       `json:"body"`
-	Headers  map[string]string `json:"headers"`
-	InitFunc []string          `json:"init"`
+	Method   string                            `json:"method"`
+	Path     string                            `json:"path"`
+	Body     interface{}                       `json:"body"`
+	Headers  map[string]string                 `json:"headers"`
+	InitFunc map[string]map[string]interface{} `json:"init"`
 }
 
 type v1Check struct {
@@ -74,13 +74,13 @@ func V1(ctx context.Context, data []byte) (*testr.Test, error) {
 	}
 
 	if v.Request.InitFunc != nil {
-		for _, initFuncID := range v.Request.InitFunc {
+		for initFuncID, initFuncData := range v.Request.InitFunc {
 			initFunc := testr.RequestInitFuncFromContext(ctx, initFuncID)
 			if initFunc == nil {
 				return nil, fmt.Errorf("no request init func found with id of `%s`", initFuncID)
 			}
 
-			req, err = initFunc(req)
+			req, err = initFunc(req, initFuncData)
 			if err != nil {
 				return nil, fmt.Errorf("request init func `%s` failed: %s", initFuncID, err)
 			}

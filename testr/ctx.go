@@ -3,7 +3,6 @@ package testr
 import (
 	"context"
 	"github.com/tomwright/api-testr/testr/check"
-	"net/http"
 )
 
 type ctxKey string
@@ -43,8 +42,6 @@ func CustomBodyCheckFromContext(ctx context.Context, checkID string) check.BodyC
 	}
 	return nil
 }
-
-type RequestInitFunc func(req *http.Request) (*http.Request, error)
 
 func ContextWithRequestInitFunc(ctx context.Context, initFuncID string, requestInitFunc RequestInitFunc) context.Context {
 	return context.WithValue(ctx, ctxRequestInitFunc+ctxKey(initFuncID), requestInitFunc)
