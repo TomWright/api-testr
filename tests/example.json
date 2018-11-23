@@ -4,7 +4,7 @@
   "group": "default",
   "order": 0,
   "request": {
-    "type": "GET",
+    "method": "GET",
     "path": "/todos/1",
     "body": ""
   },
