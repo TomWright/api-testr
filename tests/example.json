@@ -44,12 +44,6 @@
         "query": "title",
         "pattern": "[a-z]{8} [a-z]{3} [a-z]{5}"
       }
-    },
-    {
-      "type": "bodyCustom",
-      "data": {
-        "id": "123check"
-      }
     }
   ]
 }

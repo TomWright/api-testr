@@ -2,52 +2,77 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"flag"
 	"github.com/tomwright/api-testr/testr"
-	"github.com/tomwright/api-testr/testr/check"
 	"github.com/tomwright/api-testr/testr/parse"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
-func main() {
-	baseAddr := "https://jsonplaceholder.typicode.com"
-	testDir := "tests"
+const (
+	defaultMaxConcurrentTests = 5
+	defaultHTTPTimeout        = 5
+)
 
-	testFiles, err := filepath.Glob(testDir + "/*.json")
-	if err != nil {
-		panic(err)
-	}
+func main() {
+	var baseAddr string
+	var testDirs string
+	var maxConcurrentTests int
+	var httpTimeout int
+
+	flag.StringVar(&baseAddr, "base", "", "the base address used in http requests")
+	flag.StringVar(&testDirs, "tests", "", "the directory that tests are located in")
+	flag.IntVar(&maxConcurrentTests, "maxConcurrentTests", defaultMaxConcurrentTests, "the maximum number of tests that can be run concurrently")
+	flag.IntVar(&httpTimeout, "httpTimeout", defaultHTTPTimeout, "the http timeout duration in seconds")
+
+	flag.Parse()
+
+	logger := log.New(os.Stderr, "", log.LstdFlags)
 
 	ctx := context.Background()
 	ctx = testr.ContextWithBaseURL(ctx, baseAddr)
 
-	var custom123 check.BodyCustomCheckerFunc = func(bytes []byte) error {
-		if string(bytes) == "" {
-			return fmt.Errorf("response is empty")
-		}
-		return nil
-	}
-	ctx = testr.ContextWithCustomBodyCheck(ctx, "123check", custom123)
-
 	tests := make([]*testr.Test, 0)
-	for _, testFile := range testFiles {
-		t, err := parse.File(ctx, testFile)
-		if err != nil {
-			log.Printf("could not parse test file `%s`: %s", testFile, err)
-			continue
+
+	for _, testDir := range strings.Split(testDirs, ",") {
+		if logger != nil {
+			logger.Printf("searching directory for tests: %s", testDir)
 		}
-		tests = append(tests, t)
+		testFiles, err := filepath.Glob(testDir + "/[^_]*.json")
+		if err != nil {
+			panic(err)
+		}
+		for _, testFile := range testFiles {
+			t, err := parse.File(ctx, testFile)
+			if err != nil {
+				if logger != nil {
+					logger.Printf("could not parse test file `%s`: %s", testFile, err)
+				}
+				continue
+			}
+			tests = append(tests, t)
+		}
 	}
 
 	res := testr.RunAll(testr.RunAllArgs{
+		Logger: logger,
 		HTTPClient: &http.Client{
-			Timeout: time.Second * 5,
+			Timeout: time.Second * time.Duration(httpTimeout),
 		},
-		MaxConcurrentTests: 5,
+		MaxConcurrentTests: maxConcurrentTests,
 	}, tests...)
 
-	log.Printf("tests finished\n\texecuted: %d\n\tpassed: %d\n\tfailed: %d", res.Executed, res.Passed, res.Failed)
+	if logger != nil {
+		logger.Printf("tests finished\nexecuted: %d\npassed: %d\nfailed: %d", res.Executed, res.Passed, res.Failed)
+	}
+
+	if res.Failed > 0 {
+		os.Exit(1)
+	}
+
+	os.Exit(0)
 }

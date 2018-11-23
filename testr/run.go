@@ -2,6 +2,7 @@ package testr
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"sync"
@@ -11,20 +12,24 @@ const (
 	DefaultMaxConcurrentTests = 5
 )
 
-func Run(t *Test, httpClient *http.Client) error {
+func Run(t *Test, httpClient *http.Client, logger *log.Logger) error {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
 
-	log.Printf("Running test: %s\n", t.Name)
+	if logger != nil {
+		logger.Printf("running test: %s\n", t.Name)
+	}
 
-	resp, err := httpClient.Do(t.Request)
+	var err error
+
+	t.Response, err = httpClient.Do(t.Request)
 	if err != nil {
 		return fmt.Errorf("could not execute request: %s", err)
 	}
 
 	for _, c := range t.Checks {
-		err := c.Check(resp)
+		err := c.Check(t.Response)
 		if err != nil {
 			return fmt.Errorf("failed `%T` check: %s", c, err)
 		}
@@ -36,6 +41,7 @@ func Run(t *Test, httpClient *http.Client) error {
 type RunAllArgs struct {
 	HTTPClient         *http.Client
 	MaxConcurrentTests int
+	Logger             *log.Logger
 }
 
 type RunAllResult struct {
@@ -61,15 +67,21 @@ func RunAll(args RunAllArgs, tests ...*Test) RunAllResult {
 
 groupLoop:
 	for groupName, groupTests := range groupedTests {
-		log.Printf("running group %s\n", groupName)
+		if args.Logger != nil {
+			args.Logger.Printf("running group %s\n", groupName)
+		}
 		if len(groupTests.tests) == 0 {
-			log.Println("no tests")
+			if args.Logger != nil {
+				args.Logger.Println("no tests")
+			}
 			continue groupLoop
 		}
 
 	groupOrderLoop:
 		for i := groupTests.minOrder; i <= groupTests.maxOrder; i++ {
-			log.Printf("running order %d\n", i)
+			if args.Logger != nil {
+				args.Logger.Printf("running order %d\n", i)
+			}
 
 			groupOrderTests, ok := groupTests.tests[i]
 			if !ok {
@@ -87,7 +99,7 @@ groupLoop:
 					}()
 					sem <- struct{}{}
 
-					err := Run(t, args.HTTPClient)
+					err := Run(t, args.HTTPClient, args.Logger)
 
 					resMu.Lock()
 					defer resMu.Unlock()
@@ -95,7 +107,9 @@ groupLoop:
 					res.Executed++
 					if err != nil {
 						res.Failed++
-						log.Printf("test `%s` failed: %s\n", t.Name, err)
+						if args.Logger != nil {
+							args.Logger.Printf("test `%s` failed: %s\nRequest:\n%s\nResponse:\n%s\n", t.Name, err, fmtRequest(t.Request), fmtResponse(t.Response))
+						}
 					} else {
 						res.Passed++
 					}
@@ -110,6 +124,45 @@ groupLoop:
 	defer resMu.Unlock()
 
 	return *res
+}
+
+func fmtRequest(r *http.Request) string {
+	reqBodyStr, _ := ioutil.ReadAll(r.Body)
+	requestInfo := fmt.Sprintf("%s %s", r.Method, r.URL.String())
+	if reqBodyStr != nil && len(reqBodyStr) > 0 {
+		requestInfo = fmt.Sprintf("%s\nBody:", requestInfo)
+		requestInfo = fmt.Sprintf("%s\n%s", requestInfo, string(reqBodyStr))
+	}
+	if r.Header != nil && len(r.Header) > 0 {
+		requestInfo = fmt.Sprintf("%s%s", requestInfo, fmtHeader(r.Header))
+	}
+	return requestInfo
+}
+
+func fmtResponse(r *http.Response) string {
+	respBodyStr, _ := ioutil.ReadAll(r.Body)
+	responseInfo := fmt.Sprintf("%s", r.Status)
+	if respBodyStr != nil && len(respBodyStr) > 0 {
+		responseInfo = fmt.Sprintf("%s\nBody:", responseInfo)
+		responseInfo = fmt.Sprintf("%s\n%s", responseInfo, string(respBodyStr))
+	}
+	if r.Header != nil && len(r.Header) > 0 {
+		responseInfo = fmt.Sprintf("%s%s", responseInfo, fmtHeader(r.Header))
+	}
+	return responseInfo
+}
+
+func fmtHeader(header http.Header) string {
+	resp := ""
+	if header != nil && len(header) > 0 {
+		resp = fmt.Sprintf("%s\nHeaders:", resp)
+		for headerName, headers := range header {
+			for _, headerVal := range headers {
+				resp = fmt.Sprintf("%s\n\t%s: %s", resp, headerName, headerVal)
+			}
+		}
+	}
+	return resp
 }
 
 func newTestsGroup() *testsGroup {
