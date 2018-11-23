@@ -9,6 +9,7 @@ import (
 	"github.com/tomwright/api-testr/testr/check"
 	"net/http"
 	"regexp"
+	"strings"
 )
 
 type v1 struct {
@@ -20,9 +21,11 @@ type v1 struct {
 }
 
 type v1Request struct {
-	Method string `json:"method"`
-	Path   string `json:"path"`
-	Body   string `json:"body"`
+	Method   string            `json:"method"`
+	Path     string            `json:"path"`
+	Body     interface{}       `json:"body"`
+	Headers  map[string]string `json:"headers"`
+	InitFunc []string          `json:"init"`
 }
 
 type v1Check struct {
@@ -38,9 +41,50 @@ func V1(ctx context.Context, data []byte) (*testr.Test, error) {
 
 	baseAddr := testr.BaseURLFromContext(ctx)
 
-	req, err := http.NewRequest(v.Request.Method, baseAddr+v.Request.Path, bytes.NewBuffer([]byte(v.Request.Body)))
+	var requestBody []byte
+
+	if contentType, found := v.Request.Headers["Content-Type"]; found && strings.Contains(contentType, "application/json") {
+		var err error
+		requestBody, err = json.Marshal(v.Request.Body)
+		if err != nil {
+			return nil, fmt.Errorf("could not marshal request body: %s", err)
+		}
+	} else {
+		switch requestBodyVal := v.Request.Body.(type) {
+		case nil:
+			break
+		case string:
+			requestBody = []byte(requestBodyVal)
+		case []byte:
+			requestBody = requestBodyVal
+		default:
+			return nil, fmt.Errorf("cannot handle type `%T` for body", v.Request.Body)
+		}
+	}
+
+	req, err := http.NewRequest(v.Request.Method, baseAddr+v.Request.Path, bytes.NewBuffer(requestBody))
 	if err != nil {
 		return nil, fmt.Errorf("could not create request: %s", err)
+	}
+
+	if v.Request.Headers != nil {
+		for headerName, headerVal := range v.Request.Headers {
+			req.Header.Add(headerName, headerVal)
+		}
+	}
+
+	if v.Request.InitFunc != nil {
+		for _, initFuncID := range v.Request.InitFunc {
+			initFunc := testr.RequestInitFuncFromContext(ctx, initFuncID)
+			if initFunc == nil {
+				return nil, fmt.Errorf("no request init func found with id of `%s`", initFuncID)
+			}
+
+			req, err = initFunc(req)
+			if err != nil {
+				return nil, fmt.Errorf("request init func `%s` failed: %s", initFuncID, err)
+			}
+		}
 	}
 
 	t := &testr.Test{

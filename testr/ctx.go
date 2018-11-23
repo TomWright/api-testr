@@ -3,13 +3,15 @@ package testr
 import (
 	"context"
 	"github.com/tomwright/api-testr/testr/check"
+	"net/http"
 )
 
 type ctxKey string
 
 const (
-	ctxBaseURLKey     ctxKey = "baseUrl"
-	ctxCustomCheckKey ctxKey = "customBodyCheck_"
+	ctxBaseURLKey      ctxKey = "baseUrl"
+	ctxCustomCheckKey  ctxKey = "customBodyCheck_"
+	ctxRequestInitFunc ctxKey = "requestInitFunc_"
 )
 
 func ContextWithBaseURL(ctx context.Context, baseURL string) context.Context {
@@ -38,6 +40,23 @@ func CustomBodyCheckFromContext(ctx context.Context, checkID string) check.BodyC
 	}
 	if checkFunc, ok := val.(check.BodyCustomCheckerFunc); ok {
 		return checkFunc
+	}
+	return nil
+}
+
+type RequestInitFunc func(req *http.Request) (*http.Request, error)
+
+func ContextWithRequestInitFunc(ctx context.Context, initFuncID string, requestInitFunc RequestInitFunc) context.Context {
+	return context.WithValue(ctx, ctxRequestInitFunc+ctxKey(initFuncID), requestInitFunc)
+}
+
+func RequestInitFuncFromContext(ctx context.Context, initFuncID string) RequestInitFunc {
+	val := ctx.Value(ctxRequestInitFunc + ctxKey(initFuncID))
+	if val == nil {
+		return nil
+	}
+	if requestInitFunc, ok := val.(RequestInitFunc); ok {
+		return requestInitFunc
 	}
 	return nil
 }
