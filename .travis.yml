@@ -20,4 +20,5 @@ before_install:
   - chmod +x $GOPATH/bin/dep
 
 install:
+  - cd testr
   - dep ensure
