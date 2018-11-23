@@ -1,4 +1,10 @@
 # api-testr
+
+[![Build Status](https://travis-ci.org/TomWright/api-testr.svg?branch=master)](https://travis-ci.org/TomWright/api-testr)
+[![codecov](https://codecov.io/gh/TomWright/api-testr/branch/master/graph/badge.svg)](https://codecov.io/gh/TomWright/api-testr)
+[![Go Report Card](https://goreportcard.com/badge/github.com/TomWright/api-testr)](https://goreportcard.com/report/github.com/TomWright/api-testr)
+[![Documentation](https://godoc.org/github.com/TomWright/api-testr?status.svg)](https://godoc.org/github.com/TomWright/api-testr)
+
 A package used to run API tests defined in JSON files.
 
 ## Tests
