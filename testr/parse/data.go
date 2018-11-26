@@ -5,11 +5,11 @@ import (
 	"fmt"
 )
 
-type Data struct {
+type data struct {
 	d map[string]interface{}
 }
 
-func (d *Data) UnmarshalJSON(data []byte) error {
+func (d *data) UnmarshalJSON(data []byte) error {
 	d.d = make(map[string]interface{})
 	if err := json.Unmarshal(data, &d.d); err != nil {
 		return fmt.Errorf("expected map[string]interface{}: %s", err)
@@ -18,13 +18,13 @@ func (d *Data) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (d Data) Get(key string) (interface{}, bool) {
+func (d data) get(key string) (interface{}, bool) {
 	val, ok := d.d[key]
 	return val, ok
 }
 
-func (d Data) String(key string) (string, bool) {
-	val, ok := d.Get(key)
+func (d data) string(key string) (string, bool) {
+	val, ok := d.get(key)
 	if !ok {
 		return "", false
 	}
@@ -39,8 +39,8 @@ func (d Data) String(key string) (string, bool) {
 	return "", false
 }
 
-func (d Data) Int(key string) (int, bool) {
-	val, ok := d.Get(key)
+func (d data) int(key string) (int, bool) {
+	val, ok := d.get(key)
 	if !ok {
 		return 0, false
 	}

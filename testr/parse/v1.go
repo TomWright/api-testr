@@ -30,7 +30,7 @@ type v1Request struct {
 
 type v1Check struct {
 	Type string `json:"type"`
-	Data *Data  `json:"data"`
+	Data *data  `json:"data"`
 }
 
 func V1(ctx context.Context, data []byte) (*testr.Test, error) {
@@ -120,43 +120,43 @@ func V1(ctx context.Context, data []byte) (*testr.Test, error) {
 func V1Check(ctx context.Context, c v1Check) (check.Checker, error) {
 	switch c.Type {
 	case "bodyEqual":
-		value, ok := c.Data.String("value")
+		value, ok := c.Data.string("value")
 		if !ok {
 			return nil, fmt.Errorf("missing required data `value`")
 		}
 		return &check.BodyEqualChecker{Value: value}, nil
 
 	case "jsonBodyEqual":
-		value, ok := c.Data.Get("value")
+		value, ok := c.Data.get("value")
 		if !ok {
 			return nil, fmt.Errorf("missing required data `value`")
 		}
 		return &check.BodyJSONChecker{Value: value}, nil
 
 	case "jsonBodyQueryExists":
-		query, ok := c.Data.String("query")
+		query, ok := c.Data.string("query")
 		if !ok {
 			return nil, fmt.Errorf("missing required data `query`")
 		}
 		return &check.BodyJSONQueryExistsChecker{Query: query}, nil
 
 	case "jsonBodyQueryEqual":
-		query, ok := c.Data.String("query")
+		query, ok := c.Data.string("query")
 		if !ok {
 			return nil, fmt.Errorf("missing required data `query`")
 		}
-		value, ok := c.Data.Get("value")
+		value, ok := c.Data.get("value")
 		if !ok {
 			return nil, fmt.Errorf("missing required data `value`")
 		}
 		return &check.BodyJSONQueryEqualChecker{Query: query, Value: value, NullValue: value == nil}, nil
 
 	case "jsonBodyQueryRegexMatch":
-		query, ok := c.Data.String("query")
+		query, ok := c.Data.string("query")
 		if !ok {
 			return nil, fmt.Errorf("missing required data `query`")
 		}
-		pattern, ok := c.Data.String("pattern")
+		pattern, ok := c.Data.string("pattern")
 		if !ok {
 			return nil, fmt.Errorf("missing required data `pattern`")
 		}
@@ -167,14 +167,14 @@ func V1Check(ctx context.Context, c v1Check) (check.Checker, error) {
 		return &check.BodyJSONQueryRegexMatchChecker{Query: query, Regexp: r}, nil
 
 	case "statusCodeEqual":
-		value, ok := c.Data.Int("value")
+		value, ok := c.Data.int("value")
 		if !ok {
 			return nil, fmt.Errorf("missing required data `value`")
 		}
 		return &check.StatusCodeEqualChecker{Value: value}, nil
 
 	case "bodyCustom":
-		value, ok := c.Data.String("id")
+		value, ok := c.Data.string("id")
 		if !ok {
 			return nil, fmt.Errorf("missing required data `id`")
 		}
