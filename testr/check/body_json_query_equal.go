@@ -7,12 +7,14 @@ import (
 	"reflect"
 )
 
+// BodyJSONQueryEqualChecker queries the http response body JSON using `Query` and ensures the value is equal to `Value`
 type BodyJSONQueryEqualChecker struct {
 	Query     string
 	Value     interface{}
 	NullValue bool
 }
 
+// Check performs the BodyJSONQueryEqual check
 func (c *BodyJSONQueryEqualChecker) Check(response *http.Response) error {
 	body, err := readResponseBody(response)
 	if err != nil {

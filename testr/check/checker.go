@@ -7,6 +7,7 @@ import (
 	"net/http"
 )
 
+// Checker is used to outline each individual response check
 type Checker interface {
 	Check(response *http.Response) error
 }

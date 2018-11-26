@@ -6,10 +6,12 @@ import (
 	"net/http"
 )
 
+// BodyJSONQueryExistsChecker queries the http response body JSON using `Query` and ensures a value exists there
 type BodyJSONQueryExistsChecker struct {
 	Query string
 }
 
+// Check performs the BodyJSONQueryExists check
 func (c *BodyJSONQueryExistsChecker) Check(response *http.Response) error {
 	body, err := readResponseBody(response)
 	if err != nil {

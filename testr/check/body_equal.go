@@ -5,10 +5,12 @@ import (
 	"net/http"
 )
 
+// BodyEqualChecker is used to validate the http response body string exactly matches `Value`
 type BodyEqualChecker struct {
 	Value string
 }
 
+// Check performs the BodyEqual check
 func (c *BodyEqualChecker) Check(response *http.Response) error {
 	body, err := readResponseBody(response)
 	if err != nil {

@@ -7,11 +7,13 @@ import (
 	"regexp"
 )
 
+// BodyJSONQueryRegexMatchChecker queries the http response body JSON using `Query` and ensures that it matches the regex pattern in `Regexp`
 type BodyJSONQueryRegexMatchChecker struct {
 	Query  string
 	Regexp *regexp.Regexp
 }
 
+// Check performs the BodyJSONQueryRegexMatch check
 func (c *BodyJSONQueryRegexMatchChecker) Check(response *http.Response) error {
 	body, err := readResponseBody(response)
 	if err != nil {
