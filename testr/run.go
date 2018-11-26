@@ -12,6 +12,7 @@ const (
 	DefaultMaxConcurrentTests = 5
 )
 
+// Run executes a single test
 func Run(t *Test, httpClient *http.Client, logger *log.Logger) error {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
@@ -38,18 +39,21 @@ func Run(t *Test, httpClient *http.Client, logger *log.Logger) error {
 	return nil
 }
 
+// RunAllArgs defines which arguments are available to give to RunAll
 type RunAllArgs struct {
 	HTTPClient         *http.Client
 	MaxConcurrentTests int
 	Logger             *log.Logger
 }
 
+// RunAllResult is the response given from RunAll
 type RunAllResult struct {
 	Executed int
 	Passed   int
 	Failed   int
 }
 
+// RunAll runs the set of given tests
 func RunAll(args RunAllArgs, tests ...*Test) RunAllResult {
 	if args.HTTPClient == nil {
 		args.HTTPClient = http.DefaultClient

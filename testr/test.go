@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+// Test defines a test for a single endpoint
 type Test struct {
 	// Name is the name of the test
 	Name string
