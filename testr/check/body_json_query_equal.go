@@ -1,6 +1,7 @@
 package check
 
 import (
+	"context"
 	"fmt"
 	"github.com/tidwall/gjson"
 	"net/http"
@@ -12,10 +13,11 @@ type BodyJSONQueryEqualChecker struct {
 	Query     string
 	Value     interface{}
 	NullValue bool
+	DataID    string
 }
 
 // Check performs the BodyJSONQueryEqual check
-func (c *BodyJSONQueryEqualChecker) Check(response *http.Response) error {
+func (c *BodyJSONQueryEqualChecker) Check(ctx context.Context, response *http.Response) error {
 	body, err := readResponseBody(response)
 	if err != nil {
 		return fmt.Errorf("could not read response body: %s", err)
@@ -33,5 +35,5 @@ func (c *BodyJSONQueryEqualChecker) Check(response *http.Response) error {
 		return fmt.Errorf("json query element at `%s` does not match expected value. expected (%T)`%v`, got (%T)`%v`", c.Query, c.Value, c.Value, got, got)
 	}
 
-	return nil
+	return ContextWithOptionalDataID(ctx, c.DataID, r.Value())
 }

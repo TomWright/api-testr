@@ -9,6 +9,7 @@ import (
 	"github.com/tomwright/api-testr/testr/check"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -73,6 +74,9 @@ func V1(ctx context.Context, data []byte) (*testr.Test, error) {
 		}
 	}
 
+	requestInitFuncs := make([]testr.RequestInitFunc, 0)
+	requestInitFuncsData := make([]map[string]interface{}, 0)
+
 	if v.Request.InitFunc != nil {
 		for initFuncID, initFuncData := range v.Request.InitFunc {
 			initFunc := testr.RequestInitFuncFromContext(ctx, initFuncID)
@@ -80,19 +84,19 @@ func V1(ctx context.Context, data []byte) (*testr.Test, error) {
 				return nil, fmt.Errorf("no request init func found with id of `%s`", initFuncID)
 			}
 
-			req, err = initFunc(req, initFuncData)
-			if err != nil {
-				return nil, fmt.Errorf("request init func `%s` failed: %s", initFuncID, err)
-			}
+			requestInitFuncs = append(requestInitFuncs, initFunc)
+			requestInitFuncsData = append(requestInitFuncsData, initFuncData)
 		}
 	}
 
 	t := &testr.Test{
-		Name:    v.Name,
-		Group:   v.Group,
-		Order:   v.Order,
-		Request: req,
-		Checks:  make([]check.Checker, len(v.Checks)),
+		Name:                 v.Name,
+		Group:                v.Group,
+		Order:                v.Order,
+		Request:              req,
+		Checks:               make([]check.Checker, len(v.Checks)),
+		RequestInitFuncs:     requestInitFuncs,
+		RequestInitFuncsData: requestInitFuncsData,
 	}
 
 	if t.Name == "" {
@@ -126,6 +130,17 @@ func V1Check(ctx context.Context, c v1Check) (check.Checker, error) {
 		}
 		return &check.BodyEqualChecker{Value: value}, nil
 
+	case "dataEqual":
+		id, ok := c.Data.string("id")
+		if !ok {
+			return nil, fmt.Errorf("missing required data `id`")
+		}
+		value, ok := c.Data.get("value")
+		if !ok {
+			return nil, fmt.Errorf("missing required data `value`")
+		}
+		return &check.DataEqualChecker{Value: value, DataID: id}, nil
+
 	case "jsonBodyEqual":
 		value, ok := c.Data.get("value")
 		if !ok {
@@ -138,7 +153,8 @@ func V1Check(ctx context.Context, c v1Check) (check.Checker, error) {
 		if !ok {
 			return nil, fmt.Errorf("missing required data `query`")
 		}
-		return &check.BodyJSONQueryExistsChecker{Query: query}, nil
+		dataID, _ := c.Data.string("dataId")
+		return &check.BodyJSONQueryExistsChecker{Query: query, DataID: dataID}, nil
 
 	case "jsonBodyQueryEqual":
 		query, ok := c.Data.string("query")
@@ -149,7 +165,8 @@ func V1Check(ctx context.Context, c v1Check) (check.Checker, error) {
 		if !ok {
 			return nil, fmt.Errorf("missing required data `value`")
 		}
-		return &check.BodyJSONQueryEqualChecker{Query: query, Value: value, NullValue: value == nil}, nil
+		dataID, _ := c.Data.string("dataId")
+		return &check.BodyJSONQueryEqualChecker{Query: query, Value: value, NullValue: value == nil, DataID: dataID}, nil
 
 	case "jsonBodyQueryRegexMatch":
 		query, ok := c.Data.string("query")
@@ -164,7 +181,48 @@ func V1Check(ctx context.Context, c v1Check) (check.Checker, error) {
 		if err != nil {
 			return nil, fmt.Errorf("could not compile regex pattern `%s`: %s", pattern, err)
 		}
-		return &check.BodyJSONQueryRegexMatchChecker{Query: query, Regexp: r}, nil
+
+		var dataIDs map[int]string
+		if dataIDsInterface, ok := c.Data.get("dataIds"); ok {
+			switch dataIDsOfType := dataIDsInterface.(type) {
+			case map[int]string:
+				dataIDs = dataIDsOfType
+			case map[string]string:
+				dataIDs = make(map[int]string, len(dataIDsOfType))
+				for k, v := range dataIDsOfType {
+					intK, err := strconv.Atoi(k)
+					if err != nil {
+						return nil, fmt.Errorf("could not parse `dataIds` key `%v` to int: %s", k, err)
+					}
+					dataIDs[intK] = v
+				}
+			case map[string]interface{}:
+				dataIDs = make(map[int]string, len(dataIDsOfType))
+				for k, interfaceVal := range dataIDsOfType {
+					intK, err := strconv.Atoi(k)
+					if err != nil {
+						return nil, fmt.Errorf("could not parse `dataIds` key `%v` to int: %s", k, err)
+					}
+
+					switch valOfType := interfaceVal.(type) {
+					case string:
+						dataIDs[intK] = valOfType
+					case []byte:
+						dataIDs[intK] = string(valOfType)
+					default:
+						return nil, fmt.Errorf("could not parse `dataIds` value for `%d` to string", intK)
+					}
+				}
+			default:
+				return nil, fmt.Errorf("could not parse `dataIds` data. expected type of `map[int]string` or `map[string]string`, got %T", dataIDsInterface)
+			}
+		} else {
+			dataIDs = make(map[int]string)
+		}
+		if dataID, _ := c.Data.string("dataId"); dataID != "" {
+			dataIDs[0] = dataID
+		}
+		return &check.BodyJSONQueryRegexMatchChecker{Query: query, Regexp: r, DataIDs: dataIDs}, nil
 
 	case "statusCodeEqual":
 		value, ok := c.Data.int("value")

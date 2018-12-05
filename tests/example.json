@@ -28,24 +28,29 @@
     {
       "type": "jsonBodyQueryExists",
       "data": {
-        "query": "title"
+        "query": "title",
+        "dataId": "data1"
       }
     },
     {
       "type": "jsonBodyQueryEqual",
       "data": {
         "query": "userId",
-        "value": 1
+        "value": 1,
+        "dataId": "data2"
       }
     },
     {
       "type": "jsonBodyQueryRegexMatch",
       "data": {
         "query": "title",
-        "pattern": "[a-z]{8} [a-z]{3} [a-z]{5}"
+        "pattern": "([a-z]{8}) ([a-z]{3}) [a-z]{5}",
+        "dataId": "data3",
+        "dataIds": {
+          "1": "data4",
+          "2": "data5"
+        }
       }
     }
   ]
 }
-
-

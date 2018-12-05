@@ -58,7 +58,7 @@ func main() {
 		}
 	}
 
-	res := testr.RunAll(testr.RunAllArgs{
+	res := testr.RunAll(ctx, testr.RunAllArgs{
 		Logger: logger,
 		HTTPClient: &http.Client{
 			Timeout: time.Second * time.Duration(httpTimeout),

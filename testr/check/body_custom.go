@@ -1,6 +1,7 @@
 package check
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 )
@@ -14,7 +15,7 @@ type BodyCustomChecker struct {
 }
 
 // Check performs the BodyCustom check
-func (c *BodyCustomChecker) Check(response *http.Response) error {
+func (c *BodyCustomChecker) Check(ctx context.Context, response *http.Response) error {
 	body, err := readResponseBody(response)
 	if err != nil {
 		return fmt.Errorf("could not read response body: %s", err)

@@ -1,6 +1,7 @@
 package check
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 )
@@ -11,7 +12,7 @@ type BodyEqualChecker struct {
 }
 
 // Check performs the BodyEqual check
-func (c *BodyEqualChecker) Check(response *http.Response) error {
+func (c *BodyEqualChecker) Check(ctx context.Context, response *http.Response) error {
 	body, err := readResponseBody(response)
 	if err != nil {
 		return fmt.Errorf("could not read response body: %s", err)

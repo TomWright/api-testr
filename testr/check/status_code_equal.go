@@ -1,6 +1,7 @@
 package check
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 )
@@ -11,7 +12,7 @@ type StatusCodeEqualChecker struct {
 }
 
 // Check performs the StatusCodeEqual check
-func (c *StatusCodeEqualChecker) Check(response *http.Response) error {
+func (c *StatusCodeEqualChecker) Check(ctx context.Context, response *http.Response) error {
 	if response.StatusCode != c.Value {
 		return fmt.Errorf("expected status code `%d`, got `%d`", c.Value, response.StatusCode)
 	}

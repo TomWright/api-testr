@@ -1,6 +1,7 @@
 package check
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -13,7 +14,7 @@ type BodyJSONChecker struct {
 }
 
 // Check performs the BodyJSON check
-func (c *BodyJSONChecker) Check(response *http.Response) error {
+func (c *BodyJSONChecker) Check(ctx context.Context, response *http.Response) error {
 	body, err := readResponseBody(response)
 	if err != nil {
 		return fmt.Errorf("could not read response body: %s", err)

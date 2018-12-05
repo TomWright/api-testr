@@ -19,4 +19,8 @@ type Test struct {
 	Request *http.Request
 	// Response contains the http response
 	Response *http.Response
+	// RequestInitFuncs contains a set of functions used to initialise the request
+	RequestInitFuncs []RequestInitFunc
+	// RequestInitFuncsData contains the arguments to be given to the init func with the matching index
+	RequestInitFuncsData []map[string]interface{}
 }

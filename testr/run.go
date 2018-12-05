@@ -1,7 +1,9 @@
 package testr
 
 import (
+	"context"
 	"fmt"
+	"github.com/tomwright/api-testr/testr/check"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -13,7 +15,13 @@ const (
 )
 
 // Run executes a single test
-func Run(t *Test, httpClient *http.Client, logger *log.Logger) error {
+func Run(ctx context.Context, t *Test, httpClient *http.Client, logger *log.Logger) error {
+	testData := check.DataFromContext(ctx)
+	if testData == nil {
+		testData = make(map[string]interface{})
+		ctx = check.ContextWithData(ctx, testData)
+	}
+
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
@@ -24,13 +32,21 @@ func Run(t *Test, httpClient *http.Client, logger *log.Logger) error {
 
 	var err error
 
+	for i, initFunc := range t.RequestInitFuncs {
+		initFuncData := t.RequestInitFuncsData[i]
+		t.Request, err = initFunc(ctx, t.Request, initFuncData)
+		if err != nil {
+			return fmt.Errorf("request init func failed: %s", err)
+		}
+	}
+
 	t.Response, err = httpClient.Do(t.Request)
 	if err != nil {
 		return fmt.Errorf("could not execute request: %s", err)
 	}
 
 	for _, c := range t.Checks {
-		err := c.Check(t.Response)
+		err := c.Check(ctx, t.Response)
 		if err != nil {
 			return fmt.Errorf("failed `%T` check: %s", c, err)
 		}
@@ -54,12 +70,18 @@ type RunAllResult struct {
 }
 
 // RunAll runs the set of given tests
-func RunAll(args RunAllArgs, tests ...*Test) RunAllResult {
+func RunAll(ctx context.Context, args RunAllArgs, tests ...*Test) RunAllResult {
 	if args.HTTPClient == nil {
 		args.HTTPClient = http.DefaultClient
 	}
 	if args.MaxConcurrentTests == 0 {
 		args.MaxConcurrentTests = DefaultMaxConcurrentTests
+	}
+
+	testData := check.DataFromContext(ctx)
+	if testData == nil {
+		testData = make(map[string]interface{})
+		ctx = check.ContextWithData(ctx, testData)
 	}
 
 	sem := make(chan struct{}, args.MaxConcurrentTests)
@@ -103,7 +125,7 @@ groupLoop:
 					}()
 					sem <- struct{}{}
 
-					err := Run(t, args.HTTPClient, args.Logger)
+					err := Run(ctx, t, args.HTTPClient, args.Logger)
 
 					resMu.Lock()
 					defer resMu.Unlock()

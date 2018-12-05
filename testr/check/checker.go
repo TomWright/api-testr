@@ -2,6 +2,7 @@ package check
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -9,7 +10,7 @@ import (
 
 // Checker is used to outline each individual response check
 type Checker interface {
-	Check(response *http.Response) error
+	Check(ctx context.Context, response *http.Response) error
 }
 
 // readResponseBody allows you to read a http response body multiple times
