@@ -153,6 +153,9 @@ groupLoop:
 }
 
 func fmtRequest(r *http.Request) string {
+	if r == nil {
+		return ""
+	}
 	reqBodyStr, _ := ioutil.ReadAll(r.Body)
 	requestInfo := fmt.Sprintf("%s %s", r.Method, r.URL.String())
 	if reqBodyStr != nil && len(reqBodyStr) > 0 {
@@ -166,6 +169,9 @@ func fmtRequest(r *http.Request) string {
 }
 
 func fmtResponse(r *http.Response) string {
+	if r == nil {
+		return ""
+	}
 	respBodyStr, _ := ioutil.ReadAll(r.Body)
 	responseInfo := fmt.Sprintf("%s", r.Status)
 	if respBodyStr != nil && len(respBodyStr) > 0 {
