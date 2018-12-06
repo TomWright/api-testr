@@ -64,6 +64,10 @@ type RunAllArgs struct {
 	Groups []string
 	// If IgnoreGroups is not nil, any tests belonging to one of these groups will not be executed
 	IgnoreGroups []string
+	// IgnoreAllOnFailure should be true if when a test fails you want no more tests to be executed
+	IgnoreAllOnFailure bool
+	// IgnoreGroupOnFailure should be true if when a test fails you want no more tests in the failed group to be executed
+	IgnoreGroupOnFailure bool
 }
 
 // RunAllResult is the response given from RunAll
@@ -71,6 +75,7 @@ type RunAllResult struct {
 	Executed int
 	Passed   int
 	Failed   int
+	Skipped  int
 }
 
 // RunAll runs the set of given tests
@@ -114,8 +119,8 @@ func RunAll(ctx context.Context, args RunAllArgs, tests ...*Test) RunAllResult {
 		}
 	}
 
-	resMu := sync.Mutex{}
-	res := &RunAllResult{}
+	overallResMu := sync.Mutex{}
+	overallRes := &RunAllResult{}
 
 groupLoop:
 	for groupName, groupTests := range groupedTests {
@@ -128,6 +133,9 @@ groupLoop:
 			}
 			continue groupLoop
 		}
+
+		groupResMu := sync.Mutex{}
+		groupRes := &RunAllResult{}
 
 	groupOrderLoop:
 		for i := groupTests.minOrder; i <= groupTests.maxOrder; i++ {
@@ -151,31 +159,69 @@ groupLoop:
 					}()
 					sem <- struct{}{}
 
+					skip := false
+					if args.IgnoreGroupOnFailure {
+						groupResMu.Lock()
+						if groupRes.Failed > 0 {
+							skip = true
+						}
+						groupResMu.Unlock()
+					}
+					if !skip && args.IgnoreAllOnFailure {
+						overallResMu.Lock()
+						groupResMu.Lock()
+						if overallRes.Failed > 0 || groupRes.Failed > 0 {
+							skip = true
+						}
+						overallResMu.Unlock()
+						groupResMu.Unlock()
+					}
+					if skip {
+						groupResMu.Lock()
+						groupRes.Skipped++
+						if args.Logger != nil {
+							args.Logger.Printf("test `%s` skipped", t.Name)
+						}
+						groupResMu.Unlock()
+						return
+					}
+
 					err := Run(ctx, t, args.HTTPClient, args.Logger)
 
-					resMu.Lock()
-					defer resMu.Unlock()
+					groupResMu.Lock()
+					defer groupResMu.Unlock()
 
-					res.Executed++
+					groupRes.Executed++
 					if err != nil {
-						res.Failed++
+						groupRes.Failed++
 						if args.Logger != nil {
 							args.Logger.Printf("test `%s` failed: %s\nRequest:\n%s\nResponse:\n%s\n", t.Name, err, fmtRequest(t.Request), fmtResponse(t.Response))
 						}
 					} else {
-						res.Passed++
+						groupRes.Passed++
 					}
 				}(t)
 			}
 
 			wg.Wait()
 		}
+
+		overallResMu.Lock()
+		groupResMu.Lock()
+
+		overallRes.Executed += groupRes.Executed
+		overallRes.Passed += groupRes.Passed
+		overallRes.Failed += groupRes.Failed
+		overallRes.Skipped += groupRes.Skipped
+
+		overallResMu.Unlock()
+		groupResMu.Unlock()
 	}
 
-	resMu.Lock()
-	defer resMu.Unlock()
+	overallResMu.Lock()
+	defer overallResMu.Unlock()
 
-	return *res
+	return *overallRes
 }
 
 func fmtRequest(r *http.Request) string {

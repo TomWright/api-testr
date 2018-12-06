@@ -63,11 +63,13 @@ func main() {
 		HTTPClient: &http.Client{
 			Timeout: time.Second * time.Duration(httpTimeout),
 		},
-		MaxConcurrentTests: maxConcurrentTests,
+		MaxConcurrentTests:   maxConcurrentTests,
+		IgnoreGroupOnFailure: false,
+		IgnoreAllOnFailure:   true,
 	}, tests...)
 
 	if logger != nil {
-		logger.Printf("tests finished\nexecuted: %d\npassed: %d\nfailed: %d", res.Executed, res.Passed, res.Failed)
+		logger.Printf("tests finished\nexecuted: %d\npassed: %d\nfailed: %d\nskipped: %d", res.Executed, res.Passed, res.Failed, res.Skipped)
 	}
 
 	if res.Failed > 0 {
