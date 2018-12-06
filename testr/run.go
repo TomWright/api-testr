@@ -60,6 +60,10 @@ type RunAllArgs struct {
 	HTTPClient         *http.Client
 	MaxConcurrentTests int
 	Logger             *log.Logger
+	// If Groups is not nil, only tests belonging to one of these groups will be executed
+	Groups []string
+	// If IgnoreGroups is not nil, any tests belonging to one of these groups will not be executed
+	IgnoreGroups []string
 }
 
 // RunAllResult is the response given from RunAll
@@ -87,6 +91,28 @@ func RunAll(ctx context.Context, args RunAllArgs, tests ...*Test) RunAllResult {
 	sem := make(chan struct{}, args.MaxConcurrentTests)
 
 	groupedTests := groupTests(tests...)
+
+	if args.Groups != nil {
+		for groupName := range groupedTests {
+			found := false
+		foundLoop:
+			for _, g := range args.Groups {
+				if groupName == g {
+					found = true
+					break foundLoop
+				}
+			}
+			if !found {
+				delete(groupedTests, groupName)
+			}
+		}
+	}
+
+	if args.IgnoreGroups != nil {
+		for _, g := range args.IgnoreGroups {
+			delete(groupedTests, g)
+		}
+	}
 
 	resMu := sync.Mutex{}
 	res := &RunAllResult{}
