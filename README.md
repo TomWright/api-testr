@@ -119,6 +119,8 @@ Queries the JSON body using [gjson](https://github.com/tidwall/gjson) and ensure
 }
 ```
 
+There is an optional `dataId` property you can set in the data object of this check. If this property is not empty, the value found by this check will be stored under the given `dataId` for use by subsequent tests.
+
 ### JSON Body Query Equal
 Queries the JSON body using [gjson](https://github.com/tidwall/gjson) and ensures that the queried element has a value equal to the one specified.
 ```
@@ -131,17 +133,48 @@ Queries the JSON body using [gjson](https://github.com/tidwall/gjson) and ensure
 }
 ```
 
-### JSON Body Query Equal
+There is an optional `dataId` property you can set in the data object of this check. If this property is not empty, the value found by this check will be stored under the given `dataId` for use by subsequent tests.
+
+### JSON Body Query Regex Match
 Queries the JSON body using [gjson](https://github.com/tidwall/gjson) and ensures that the queried element matches the given regex pattern.
 ```
 {
   "type": "jsonBodyQueryRegexMatch",
   "data": {
     "query": "title",
-    "pattern": "[a-z]{8} [a-z]{3} [a-z]{5}"
+    "pattern": "([a-z]{8}) ([a-z]{3}) ([a-z]{5})"
   }
 }
 ```
+
+There is an optional `dataIds` property you can set in the data object of this check. If this property is not empty, the values found in matching groups by this check will be stored under the given `dataIds` for use by subsequent tests.
+
+E.g.
+This response:
+```
+{
+    "message": "Hello there, Tom"
+}
+```
+With this check:
+```
+{
+  "type": "jsonBodyQueryRegexMatch",
+  "data": {
+    "query": "message",
+    "pattern": "([a-zA-Z]+), ([a-zA-Z]+)",
+    "dataIds": {
+        "0": "responseMessage",
+        "1": "responseGreeting",
+        "2": "responseName"
+    }
+  }
+}
+```
+Will result in the following variables being available for use later on:
+- `$.responseMessage`: `Hello there, Tom`
+- `$.responseGreeting`: `Hello there`
+- `$.responseName`: `Tom`
 
 ### Status Code Equal
 Checks that the status code returned matches the given value.
@@ -182,3 +215,69 @@ ctx = testr.ContextWithCustomBodyCheck(ctx, "123check", custom123)
 ```
 
 Then simply use the id of `123check` in your `bodyCustom` check data.
+
+## Request Initialisation
+Sometimes you'll need to do some dynamic testing, and that's where request init functions come in.
+
+Register your init funcs as follows:
+```
+var myInitFunc RequestInitFunc = func(ctx context.Context, req *http.Request, data map[string]interface{}) (*http.Request, error) {
+    // modify or create a new request here
+    // use the data map as required
+    return req, nil
+}
+testr.ContextWithRequestInitFunc(ctx, "my-init-func-id", myInitFunc)
+```
+
+And then use them in your tests as so:
+```
+{
+    "request": {
+        "init": {
+            "my-init-func-id": {
+                "some": "data",
+            }
+        }
+    }
+}
+```
+
+### Common init funcs
+Some common init funcs are provided.
+
+#### Request replacements
+The replacements init func allows you to replace placeholders in the request URL path, URL query, headers and body with a given value.
+
+It can be registered as follows:
+```
+testr.ContextWithRequestInitFunc(ctx, "replacements", testr.RequestReplacements)
+```
+
+Used in tests as so:
+```
+{
+    "request": {
+        "init": {
+            "replacements": {
+                ":name:": "Tom",
+            }
+        },
+        "url": "https://example.com/users?name=:name:"
+    }
+}
+```
+
+If you want to use a data value that has been stored in the context by another test you should use `$.my-data-item` as the replacement value, where the previous test had used `my-data-item` as the `dataId`.
+Or, moving on from the example given previously in *JSON Body Query Regex Match* you would do something like this:
+```
+{
+    "request": {
+        "init": {
+            "replacements": {
+                ":name:": "$.responseName",
+            }
+        },
+        "url": "https://example.com/users?name=:name:"
+    }
+}
+```
