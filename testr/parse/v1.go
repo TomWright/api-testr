@@ -22,6 +22,7 @@ type v1 struct {
 }
 
 type v1Request struct {
+	Base     string                            `json:"base"`
 	Method   string                            `json:"method"`
 	Path     string                            `json:"path"`
 	Body     interface{}                       `json:"body"`
@@ -40,7 +41,9 @@ func V1(ctx context.Context, data []byte) (*testr.Test, error) {
 		return nil, fmt.Errorf("could not unmarshal v1 test data: %s", err)
 	}
 
-	baseAddr := testr.BaseURLFromContext(ctx)
+	if v.Request.Base == "" {
+		v.Request.Base = testr.BaseURLFromContext(ctx)
+	}
 
 	var requestBody []byte
 
@@ -63,7 +66,7 @@ func V1(ctx context.Context, data []byte) (*testr.Test, error) {
 		}
 	}
 
-	req, err := http.NewRequest(v.Request.Method, baseAddr+v.Request.Path, bytes.NewBuffer(requestBody))
+	req, err := http.NewRequest(v.Request.Method, v.Request.Base+v.Request.Path, bytes.NewBuffer(requestBody))
 	if err != nil {
 		return nil, fmt.Errorf("could not create request: %s", err)
 	}
