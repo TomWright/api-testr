@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -16,19 +17,7 @@ type RequestInitFunc func(ctx context.Context, req *http.Request, data map[strin
 
 // RequestReplacements runs a find and replace in the request body, headers and url path with the given replacements in `data`
 func RequestReplacements(ctx context.Context, req *http.Request, data map[string]interface{}) (*http.Request, error) {
-	req, err := RequestHostReplacements(ctx, req, data)
-	if err != nil {
-		return req, err
-	}
-	req, err = RequestSchemeReplacements(ctx, req, data)
-	if err != nil {
-		return req, err
-	}
-	req, err = RequestPathReplacements(ctx, req, data)
-	if err != nil {
-		return req, err
-	}
-	req, err = RequestQueryReplacements(ctx, req, data)
+	req, err := RequestURLReplacements(ctx, req, data)
 	if err != nil {
 		return req, err
 	}
@@ -44,49 +33,19 @@ func RequestReplacements(ctx context.Context, req *http.Request, data map[string
 }
 
 // RequestSchemeReplacements runs a find and replace in the request url scheme with the given replacements in `data`
-func RequestSchemeReplacements(ctx context.Context, req *http.Request, data map[string]interface{}) (*http.Request, error) {
+func RequestURLReplacements(ctx context.Context, req *http.Request, data map[string]interface{}) (*http.Request, error) {
+	urlStr := req.URL.String()
 	for k, v := range data {
 		vStr, err := getReplacementValue(ctx, v)
 		if err != nil {
 			return nil, err
 		}
-		req.URL.Scheme = strings.Replace(req.URL.Scheme, k, vStr, -1)
+		urlStr = strings.Replace(urlStr, k, vStr, -1)
 	}
-	return req, nil
-}
-
-// RequestHostReplacements runs a find and replace in the request url host with the given replacements in `data`
-func RequestHostReplacements(ctx context.Context, req *http.Request, data map[string]interface{}) (*http.Request, error) {
-	for k, v := range data {
-		vStr, err := getReplacementValue(ctx, v)
-		if err != nil {
-			return nil, err
-		}
-		req.URL.Host = strings.Replace(req.URL.Host, k, vStr, -1)
-	}
-	return req, nil
-}
-
-// RequestPathReplacements runs a find and replace in the request url path with the given replacements in `data`
-func RequestPathReplacements(ctx context.Context, req *http.Request, data map[string]interface{}) (*http.Request, error) {
-	for k, v := range data {
-		vStr, err := getReplacementValue(ctx, v)
-		if err != nil {
-			return nil, err
-		}
-		req.URL.Path = strings.Replace(req.URL.Path, k, vStr, -1)
-	}
-	return req, nil
-}
-
-// RequestQueryReplacements runs a find and replace in the request url query with the given replacements in `data`
-func RequestQueryReplacements(ctx context.Context, req *http.Request, data map[string]interface{}) (*http.Request, error) {
-	for k, v := range data {
-		vStr, err := getReplacementValue(ctx, v)
-		if err != nil {
-			return nil, err
-		}
-		req.URL.RawQuery = strings.Replace(req.URL.RawQuery, k, vStr, -1)
+	var err error
+	req.URL, err = url.Parse(urlStr)
+	if err != nil {
+		return nil, err
 	}
 	return req, nil
 }
