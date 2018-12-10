@@ -46,6 +46,22 @@ func TestRequestReplacements(t *testing.T) {
 		ctx             func(ctx context.Context) context.Context
 	}{
 		{
+			desc: "domain replacements work",
+			replacements: map[string]interface{}{
+				"old.com": "new.com",
+			},
+			url:         "https://old.com",
+			expectedUrl: "https://new.com",
+		},
+		{
+			desc: "scheme replacements work",
+			replacements: map[string]interface{}{
+				"https": "http",
+			},
+			url:         "https://example.com",
+			expectedUrl: "http://example.com",
+		},
+		{
 			desc: "standard string replacements work",
 			replacements: map[string]interface{}{
 				":name:": "Tom",
@@ -88,20 +104,12 @@ func TestRequestReplacements(t *testing.T) {
 				ctx = tc.ctx(ctx)
 			}
 
-			var inputBody *bytes.Buffer
-			if tc.body != nil {
-				inputBody = bytes.NewBuffer(tc.body)
-			}
-			inputReq, _ := http.NewRequest("POST", tc.url, inputBody)
+			inputReq, _ := http.NewRequest("POST", tc.url, bytes.NewBuffer(tc.body))
 			for k, v := range tc.headers {
 				inputReq.Header.Add(k, v)
 			}
 
-			var expectedBody *bytes.Buffer
-			if tc.expectedBody != nil {
-				expectedBody = bytes.NewBuffer(tc.expectedBody)
-			}
-			expectedReq, _ := http.NewRequest("POST", tc.expectedUrl, expectedBody)
+			expectedReq, _ := http.NewRequest("POST", tc.expectedUrl, bytes.NewBuffer(tc.expectedBody))
 			for k, v := range tc.expectedHeaders {
 				expectedReq.Header.Add(k, v)
 			}
