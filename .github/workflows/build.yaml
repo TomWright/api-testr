@@ -1,0 +1,40 @@
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+name: Build
+jobs:
+  publish:
+    strategy:
+      matrix:
+        go-version: [1.13.x]
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+        include:
+          - os: ubuntu-latest
+            artifact_name: apitestr
+            asset_name: apitestr_linux_amd64
+          - os: windows-latest
+            artifact_name: apitestr.exe
+            asset_name: apitestr_windows_amd64.exe
+          - os: macos-latest
+            artifact_name: apitestr
+            asset_name: apitestr_macos_amd64
+    name: Publish for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2-beta
+        with:
+          go-version: '^1.13.4' # The Go version to download (if necessary) and use.
+      - name: Build
+        run: go build -o target/release/${{ matrix.artifact_name }} ./cmd/apitestr
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v1-release
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/${{ matrix.artifact_name }}
+          asset_name: ${{ matrix.asset_name }}
+          tag: ${{ github.ref }}
