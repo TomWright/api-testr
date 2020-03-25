@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/tomwright/api-testr/testr"
-	"github.com/tomwright/api-testr/testr/parse"
+	"github.com/tomwright/apitestr"
+	"github.com/tomwright/apitestr/parse"
 	"log"
 	"net/http"
 	"os"
@@ -34,9 +34,9 @@ func main() {
 	logger := log.New(os.Stderr, "", log.LstdFlags)
 
 	ctx := context.Background()
-	ctx = testr.ContextWithBaseURL(ctx, baseAddr)
+	ctx = apitestr.ContextWithBaseURL(ctx, baseAddr)
 
-	tests := make([]*testr.Test, 0)
+	tests := make([]*apitestr.Test, 0)
 
 	for _, testDir := range strings.Split(testDirs, ",") {
 		if logger != nil {
@@ -58,7 +58,7 @@ func main() {
 		}
 	}
 
-	res := testr.RunAll(ctx, testr.RunAllArgs{
+	res := apitestr.RunAll(ctx, apitestr.RunAllArgs{
 		Logger: logger,
 		HTTPClient: &http.Client{
 			Timeout: time.Second * time.Duration(httpTimeout),

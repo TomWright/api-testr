@@ -1,10 +1,10 @@
-package testr
+package apitestr
 
 import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/tomwright/api-testr/testr/check"
+	"github.com/tomwright/apitestr/check"
 	"io"
 	"io/ioutil"
 	"net/http"

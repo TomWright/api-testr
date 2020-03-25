@@ -1,11 +1,11 @@
-package testr_test
+package apitestr_test
 
 import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/tomwright/api-testr/testr"
-	"github.com/tomwright/api-testr/testr/check"
+	"github.com/tomwright/apitestr"
+	"github.com/tomwright/apitestr/check"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -114,7 +114,7 @@ func TestRequestReplacements(t *testing.T) {
 				expectedReq.Header.Add(k, v)
 			}
 
-			resultReq, err := testr.RequestReplacements(ctx, inputReq, tc.replacements)
+			resultReq, err := apitestr.RequestReplacements(ctx, inputReq, tc.replacements)
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
 			}

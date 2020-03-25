@@ -1,9 +1,9 @@
-# api-testr
+# apitestr
 
-[![Build Status](https://travis-ci.org/TomWright/api-testr.svg?branch=master)](https://travis-ci.org/TomWright/api-testr)
-[![codecov](https://codecov.io/gh/TomWright/api-testr/branch/master/graph/badge.svg)](https://codecov.io/gh/TomWright/api-testr)
-[![Go Report Card](https://goreportcard.com/badge/github.com/TomWright/api-testr/testr)](https://goreportcard.com/report/github.com/TomWright/api-testr/testr)
-[![Documentation](https://godoc.org/github.com/TomWright/api-testr/testr?status.svg)](https://godoc.org/github.com/TomWright/api-testr/testr)
+[![Go Report Card](https://goreportcard.com/badge/github.com/TomWright/apitestr)](https://goreportcard.com/report/github.com/TomWright/apitestr)
+[![Documentation](https://godoc.org/github.com/TomWright/apitestr?status.svg)](https://godoc.org/github.com/TomWright/apitestr)
+![Test](https://github.com/TomWright/apitestr/workflows/Test/badge.svg)
+![Build](https://github.com/TomWright/apitestr/workflows/Build/badge.svg)
 
 A package used to run API tests defined in JSON files.
 

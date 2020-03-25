@@ -1,9 +1,9 @@
-package testr
+package apitestr
 
 import (
 	"context"
 	"fmt"
-	"github.com/tomwright/api-testr/testr/check"
+	"github.com/tomwright/apitestr/check"
 	"io/ioutil"
 	"log"
 	"net/http"

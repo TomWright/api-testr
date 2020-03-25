@@ -1,4 +1,4 @@
-module github.com/tomwright/api-testr
+module github.com/tomwright/apitestr
 
 go 1.13
 

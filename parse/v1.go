@@ -5,8 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/tomwright/api-testr/testr"
-	"github.com/tomwright/api-testr/testr/check"
+	"github.com/tomwright/apitestr"
+	"github.com/tomwright/apitestr/check"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -35,14 +35,14 @@ type v1Check struct {
 	Data *data  `json:"data"`
 }
 
-func V1(ctx context.Context, data []byte) (*testr.Test, error) {
+func V1(ctx context.Context, data []byte) (*apitestr.Test, error) {
 	v := v1{}
 	if err := json.Unmarshal(data, &v); err != nil {
 		return nil, fmt.Errorf("could not unmarshal v1 test data: %s", err)
 	}
 
 	if v.Request.Base == "" {
-		v.Request.Base = testr.BaseURLFromContext(ctx)
+		v.Request.Base = apitestr.BaseURLFromContext(ctx)
 	}
 
 	var requestBody []byte
@@ -77,12 +77,12 @@ func V1(ctx context.Context, data []byte) (*testr.Test, error) {
 		}
 	}
 
-	requestInitFuncs := make([]testr.RequestInitFunc, 0)
+	requestInitFuncs := make([]apitestr.RequestInitFunc, 0)
 	requestInitFuncsData := make([]map[string]interface{}, 0)
 
 	if v.Request.InitFunc != nil {
 		for initFuncID, initFuncData := range v.Request.InitFunc {
-			initFunc := testr.RequestInitFuncFromContext(ctx, initFuncID)
+			initFunc := apitestr.RequestInitFuncFromContext(ctx, initFuncID)
 			if initFunc == nil {
 				return nil, fmt.Errorf("no request init func found with id of `%s`", initFuncID)
 			}
@@ -92,7 +92,7 @@ func V1(ctx context.Context, data []byte) (*testr.Test, error) {
 		}
 	}
 
-	t := &testr.Test{
+	t := &apitestr.Test{
 		Name:                 v.Name,
 		Group:                v.Group,
 		Order:                v.Order,
@@ -239,7 +239,7 @@ func V1Check(ctx context.Context, c v1Check) (check.Checker, error) {
 		if !ok {
 			return nil, fmt.Errorf("missing required data `id`")
 		}
-		checkFunc := testr.CustomBodyCheckFromContext(ctx, value)
+		checkFunc := apitestr.CustomBodyCheckFromContext(ctx, value)
 		if checkFunc == nil {
 			return nil, fmt.Errorf("no custom body check found with id of `%s`", value)
 		}

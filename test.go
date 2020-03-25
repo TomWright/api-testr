@@ -1,7 +1,7 @@
-package testr
+package apitestr
 
 import (
-	"github.com/tomwright/api-testr/testr/check"
+	"github.com/tomwright/apitestr/check"
 	"net/http"
 )
 

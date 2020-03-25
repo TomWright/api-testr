@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/tomwright/api-testr/testr"
+	"github.com/tomwright/apitestr"
 	"io/ioutil"
 )
 
@@ -12,7 +12,7 @@ type version struct {
 	Version int `json:"version"`
 }
 
-func File(ctx context.Context, path string) (*testr.Test, error) {
+func File(ctx context.Context, path string) (*apitestr.Test, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("could not read test file: %s", err)
@@ -20,13 +20,13 @@ func File(ctx context.Context, path string) (*testr.Test, error) {
 	return Parse(ctx, data)
 }
 
-func Parse(ctx context.Context, data []byte) (*testr.Test, error) {
+func Parse(ctx context.Context, data []byte) (*apitestr.Test, error) {
 	v := version{}
 	if err := json.Unmarshal(data, &v); err != nil {
 		return nil, fmt.Errorf("could not unmarshal version data: %s", err)
 	}
 
-	var t *testr.Test
+	var t *apitestr.Test
 	var err error
 
 	switch v.Version {

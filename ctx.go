@@ -1,8 +1,8 @@
-package testr
+package apitestr
 
 import (
 	"context"
-	"github.com/tomwright/api-testr/testr/check"
+	"github.com/tomwright/apitestr/check"
 )
 
 type ctxKey string
