@@ -15,7 +15,7 @@ type version struct {
 func File(ctx context.Context, path string) (*apitestr.Test, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("could not read test file: %s", err)
+		return nil, fmt.Errorf("could not read test file: %w", err)
 	}
 	return Parse(ctx, data)
 }
@@ -23,7 +23,7 @@ func File(ctx context.Context, path string) (*apitestr.Test, error) {
 func Parse(ctx context.Context, data []byte) (*apitestr.Test, error) {
 	v := version{}
 	if err := json.Unmarshal(data, &v); err != nil {
-		return nil, fmt.Errorf("could not unmarshal version data: %s", err)
+		return nil, fmt.Errorf("could not unmarshal version data: %w", err)
 	}
 
 	var t *apitestr.Test

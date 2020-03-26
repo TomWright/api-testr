@@ -38,7 +38,7 @@ type v1Check struct {
 func V1(ctx context.Context, data []byte) (*apitestr.Test, error) {
 	v := v1{}
 	if err := json.Unmarshal(data, &v); err != nil {
-		return nil, fmt.Errorf("could not unmarshal v1 test data: %s", err)
+		return nil, fmt.Errorf("could not unmarshal v1 test data: %w", err)
 	}
 
 	if v.Request.Base == "" {
@@ -51,7 +51,7 @@ func V1(ctx context.Context, data []byte) (*apitestr.Test, error) {
 		var err error
 		requestBody, err = json.Marshal(v.Request.Body)
 		if err != nil {
-			return nil, fmt.Errorf("could not marshal request body: %s", err)
+			return nil, fmt.Errorf("could not marshal request body: %w", err)
 		}
 	} else {
 		switch requestBodyVal := v.Request.Body.(type) {
@@ -68,7 +68,7 @@ func V1(ctx context.Context, data []byte) (*apitestr.Test, error) {
 
 	req, err := http.NewRequest(v.Request.Method, v.Request.Base+v.Request.Path, bytes.NewBuffer(requestBody))
 	if err != nil {
-		return nil, fmt.Errorf("could not create request: %s", err)
+		return nil, fmt.Errorf("could not create request: %w", err)
 	}
 
 	if v.Request.Headers != nil {
@@ -115,7 +115,7 @@ func V1(ctx context.Context, data []byte) (*apitestr.Test, error) {
 	for cIndex, c := range v.Checks {
 		checker, err := V1Check(ctx, c)
 		if err != nil {
-			return nil, fmt.Errorf("could not parse v1 check [%d]: %s", cIndex, err)
+			return nil, fmt.Errorf("could not parse v1 check [%d]: %w", cIndex, err)
 		}
 
 		t.Checks[cIndex] = checker
@@ -182,7 +182,7 @@ func V1Check(ctx context.Context, c v1Check) (check.Checker, error) {
 		}
 		r, err := regexp.Compile(pattern)
 		if err != nil {
-			return nil, fmt.Errorf("could not compile regex pattern `%s`: %s", pattern, err)
+			return nil, fmt.Errorf("could not compile regex pattern `%s`: %w", pattern, err)
 		}
 
 		var dataIDs map[int]string
@@ -195,7 +195,7 @@ func V1Check(ctx context.Context, c v1Check) (check.Checker, error) {
 				for k, v := range dataIDsOfType {
 					intK, err := strconv.Atoi(k)
 					if err != nil {
-						return nil, fmt.Errorf("could not parse `dataIds` key `%v` to int: %s", k, err)
+						return nil, fmt.Errorf("could not parse `dataIds` key `%v` to int: %w", k, err)
 					}
 					dataIDs[intK] = v
 				}
@@ -204,7 +204,7 @@ func V1Check(ctx context.Context, c v1Check) (check.Checker, error) {
 				for k, interfaceVal := range dataIDsOfType {
 					intK, err := strconv.Atoi(k)
 					if err != nil {
-						return nil, fmt.Errorf("could not parse `dataIds` key `%v` to int: %s", k, err)
+						return nil, fmt.Errorf("could not parse `dataIds` key `%v` to int: %w", k, err)
 					}
 
 					switch valOfType := interfaceVal.(type) {

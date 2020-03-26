@@ -2,8 +2,13 @@ package check
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net/http"
+)
+
+var (
+	// ErrMissingCheckFunc is returned when a BodyCustomChecker is checked without a valid func.
+	ErrMissingCheckFunc = errors.New("missing check func")
 )
 
 // BodyCustomCheckerFunc defines the function used to perform a custom http response body check
@@ -18,11 +23,11 @@ type BodyCustomChecker struct {
 func (c *BodyCustomChecker) Check(ctx context.Context, response *http.Response) error {
 	body, err := readResponseBody(response)
 	if err != nil {
-		return fmt.Errorf("could not read response body: %s", err)
+		return err
 	}
 
 	if c.CheckBody == nil {
-		return fmt.Errorf("missing check func on body custom checker")
+		return ErrMissingCheckFunc
 	}
 
 	return c.CheckBody(body)

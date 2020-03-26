@@ -36,19 +36,19 @@ func Run(ctx context.Context, t *Test, httpClient *http.Client, logger *log.Logg
 		initFuncData := t.RequestInitFuncsData[i]
 		t.Request, err = initFunc(ctx, t.Request, initFuncData)
 		if err != nil {
-			return fmt.Errorf("request init func failed: %s", err)
+			return fmt.Errorf("request init func failed: %w", err)
 		}
 	}
 
 	t.Response, err = httpClient.Do(t.Request)
 	if err != nil {
-		return fmt.Errorf("could not execute request: %s", err)
+		return fmt.Errorf("could not execute request: %w", err)
 	}
 
 	for _, c := range t.Checks {
 		err := c.Check(ctx, t.Response)
 		if err != nil {
-			return fmt.Errorf("failed `%T` check: %s", c, err)
+			return fmt.Errorf("failed `%T` check: %w", c, err)
 		}
 	}
 

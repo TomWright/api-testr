@@ -7,6 +7,17 @@ import (
 	"net/http"
 )
 
+// JSONQueryValueMissingError is returned when a check fails.
+type JSONQueryValueMissingError struct {
+	// Query is the JSON query.
+	Query string
+}
+
+// Error returns an error string.
+func (e *JSONQueryValueMissingError) Error() string {
+	return fmt.Sprintf("value at %v is missing", e.Query)
+}
+
 // BodyJSONQueryExistsChecker queries the http response body JSON using `Query` and ensures a value exists there
 type BodyJSONQueryExistsChecker struct {
 	Query  string
@@ -17,7 +28,7 @@ type BodyJSONQueryExistsChecker struct {
 func (c *BodyJSONQueryExistsChecker) Check(ctx context.Context, response *http.Response) error {
 	body, err := readResponseBody(response)
 	if err != nil {
-		return fmt.Errorf("could not read response body: %s", err)
+		return err
 	}
 
 	j := gjson.ParseBytes(body)
@@ -25,7 +36,9 @@ func (c *BodyJSONQueryExistsChecker) Check(ctx context.Context, response *http.R
 	r := j.Get(c.Query)
 
 	if !r.Exists() {
-		return fmt.Errorf("json query element does not exist: %s`", c.Query)
+		return &JSONQueryValueMissingError{
+			Query: c.Query,
+		}
 	}
 
 	return ContextWithOptionalDataID(ctx, c.DataID, r.Value())

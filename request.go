@@ -76,7 +76,7 @@ func RequestBodyReplacements(ctx context.Context, req *http.Request, data map[st
 	}
 	bodyData, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		return nil, fmt.Errorf("could not read body: %s", err)
+		return nil, fmt.Errorf("could not read body: %w", err)
 	}
 	bodyStr := string(bodyData)
 	for k, v := range data {

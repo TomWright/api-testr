@@ -11,6 +11,7 @@ const (
 	dataCtxKey ctxKey = "ctxData"
 )
 
+// DataFromContext returns a map of check data from the context.
 func DataFromContext(ctx context.Context) map[string]interface{} {
 	val := ctx.Value(dataCtxKey)
 	if val == nil {
@@ -22,6 +23,7 @@ func DataFromContext(ctx context.Context) map[string]interface{} {
 	return nil
 }
 
+// DataIDFromContext returns data with the given ID from the context.
 func DataIDFromContext(ctx context.Context, id string) interface{} {
 	data := DataFromContext(ctx)
 	if data == nil {
@@ -33,10 +35,12 @@ func DataIDFromContext(ctx context.Context, id string) interface{} {
 	return nil
 }
 
+// ContextWithData embeds the given data in the context.
 func ContextWithData(ctx context.Context, data map[string]interface{}) context.Context {
 	return context.WithValue(ctx, dataCtxKey, data)
 }
 
+// ContextWithDataID embeds the given data item in the context.
 func ContextWithDataID(ctx context.Context, id string, val interface{}) error {
 	data := DataFromContext(ctx)
 	if data == nil {
@@ -46,6 +50,7 @@ func ContextWithDataID(ctx context.Context, id string, val interface{}) error {
 	return nil
 }
 
+// ContextWithDataID embeds the given data item in the context, if the ID is not empty.
 func ContextWithOptionalDataID(ctx context.Context, id string, val interface{}) error {
 	if id == "" {
 		return nil

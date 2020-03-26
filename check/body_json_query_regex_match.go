@@ -8,6 +8,21 @@ import (
 	"regexp"
 )
 
+// UnexpectedJSONQueryRegexValueError is returned when a check fails.
+type UnexpectedJSONQueryRegexValueError struct {
+	// Pattern is the regex pattern.
+	Pattern string
+	// Query is the JSON query.
+	Query string
+	// Actual is the actual value.
+	Actual string
+}
+
+// Error returns an error string.
+func (e *UnexpectedJSONQueryRegexValueError) Error() string {
+	return fmt.Sprintf("unexpected value at %v: does not match pattern %v: got %v", e.Query, e.Pattern, e.Actual)
+}
+
 // BodyJSONQueryRegexMatchChecker queries the http response body JSON using `Query` and ensures that it matches the regex pattern in `Regexp`
 type BodyJSONQueryRegexMatchChecker struct {
 	Query   string
@@ -19,7 +34,7 @@ type BodyJSONQueryRegexMatchChecker struct {
 func (c *BodyJSONQueryRegexMatchChecker) Check(ctx context.Context, response *http.Response) error {
 	body, err := readResponseBody(response)
 	if err != nil {
-		return fmt.Errorf("could not read response body: %s", err)
+		return err
 	}
 
 	j := gjson.ParseBytes(body)
@@ -27,11 +42,17 @@ func (c *BodyJSONQueryRegexMatchChecker) Check(ctx context.Context, response *ht
 	r := j.Get(c.Query)
 
 	if !r.Exists() {
-		return fmt.Errorf("json query element does not exist: %s`", c.Query)
+		return &JSONQueryValueMissingError{
+			Query: c.Query,
+		}
 	}
 
 	if !c.Regexp.MatchString(r.String()) {
-		return fmt.Errorf("json query element at `%s` with a value of `%s` does not match regex pattern `%s`", c.Query, r.String(), c.Regexp.String())
+		return &UnexpectedJSONQueryRegexValueError{
+			Pattern: c.Regexp.String(),
+			Query:   c.Query,
+			Actual:  r.String(),
+		}
 	}
 
 	if c.DataIDs != nil {
