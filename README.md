@@ -7,6 +7,24 @@
 
 A package used to run API tests defined in JSON files.
 
+## Usage
+
+### Install
+Download an executable from the [latest release](https://github.com/TomWright/apitestr/releases/latest).
+You may have to `chmod +x` the download file.
+
+Or build from source:
+```
+git clone git@github.com:TomWright/apitestr.git
+cd apitestr
+go build -o apitestr cmd/app/main.go
+```
+
+### Run the tests
+```
+apitestr -tests ./tests -base http://localhost:8080
+```
+
 ## Tests
 Tests are contained in a single JSON file - [Example test here](tests/example.json).
 
